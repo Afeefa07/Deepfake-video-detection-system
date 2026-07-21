@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-8 animate-fade-in">
+    <div class="mb-6">
+        <a href="{% url 'dashboard' %}"
+            class="text-gray-400 hover:text-white flex items-center mb-4 transition-colors w-fit">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            Back to Dashboard
+        </a>
+        <h1 class="text-3xl font-bold text-white mb-2">Analysis Report</h1>
+        <p class="text-gray-400">
+            File: <span class="font-mono text-gray-300">{{item.filename}}</span> | Analyzed on {{item.created_at|date:"M d, Y h:i A"}}
+        </p>
+    </div>
+
+    <!-- Top High-Level Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="metric-card flex flex-col justify-center items-center py-8 {% if item.label == 'FAKE' %}warning{% endif %}"
+            id="verdict-card">
+            <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-2 font-semibold">Final Verdict</h3>
+            <div id="result-label"
+                class="text-5xl font-black tracking-tight mt-2 drop-shadow-md {% if item.label == 'FAKE' %}text-red-500{% else %}text-green-400{% endif %}">
+                {{item.label}}
+            </div>
+        </div>
+
+        <div class="metric-card p-6">
+            <h3 class="text-sm uppercase tracking-widest text-gray-400 mb-4 font-semibold">Confidence Score</h3>
+            <div class="flex items-end justify-between mb-2">
+                <span class="text-4xl font-bold text-white">{% widthratio item.confidence 1 100 %}%</span>
+                <span class="text-gray-500 text-sm mb-1">Fake Probability:
+                    {{item.fake_probability|floatformat:3}}</span>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-4 mt-2 border border-gray-700">
+                <div class="h-full rounded-full {% if item.label == 'FAKE' %}bg-gradient-to-r from-red-600 to-red-400{% else %}bg-gradient-to-r from-green-600 to-green-400{% endif %}"
+                    style="width: {% widthratio item.confidence 1 100 %}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Visual Analysis -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="metric-card p-0 overflow-hidden group">
+                <div class="bg-gray-800 p-3 border-b border-gray-700 text-sm font-semibold flex justify-between">
+                    <span>Subject Modality</span>
+                    <span class="text-neo-primary text-xs flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd"></path>
+                        </svg> Face BBox + ROI
+                    </span>
+                </div>
+                <div class="relative w-full h-48 bg-black flex items-center justify-center">
+                    {% if item.visualization_path %}
+                    <img src="{{item.visualization_path}}" alt="Face Visualization"
+                        class="max-h-full object-contain filter group-hover:brightness-110 transition-all">
+                    {% else %}
+                    <div class="text-gray-600 text-sm">No visualization generated</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <h4 class="text-gray-400 text-sm font-medium mb-3">Branch Probabilities</h4>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Visual Stream Score</span>
+                            <span
+                                class="font-mono text-neo-secondary">{{item.detailed_metrics.visual_stream_score|floatformat:3}}</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-1.5">
+                            <div class="bg-neo-secondary h-1.5 rounded-full"
+                                style="width: {% widthratio item.detailed_metrics.visual_stream_score|default:0 1 100 %}%">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>Physiological (rPPG) Score</span>
+                            <span
+                                class="font-mono text-neo-primary">{{item.detailed_metrics.rppg_stream_score|floatformat:3}}</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-1.5">
+                            <div class="bg-neo-primary h-1.5 rounded-full"
+                                style="width: {% widthratio item.detailed_metrics.rppg_stream_score|default:0 1 100 %}%">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border-t border-gray-700 pt-3 mt-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-400">Fusion Gate (Vis vs rPPG)</span>
+                            <span
+                                class="font-mono text-gray-300">{{item.detailed_metrics.average_fusion_gate|floatformat:3}}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- rPPG Metrics -->
+        <div class="lg:col-span-2 metric-card p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-bold text-white flex items-center border-l-4 border-neo-primary pl-3">
+                    Extracted Physiological Features (rPPG)
+                </h3>
+            </div>
+
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">Heart Rate (BPM)</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.rppg_features.bpm_mean|floatformat:1}}
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">ROI Sync</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.rppg_features.roi_sync_mean|floatformat:3}}
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">Peak Ratio</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.rppg_features.peak_ratio_mean|floatformat:2}}
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">SNR Forehead</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.rppg_features.snr_forehead_mean|floatformat:2}}
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">Spectral Entropy</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.rppg_features.spectral_entropy_mean|floatformat:2}}
+                    </div>
+                </div>
+                <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                    <div class="text-gray-400 text-xs uppercase mb-1">Frames Validated</div>
+                    <div class="text-2xl font-mono text-white">
+                        {{item.detailed_metrics.faces_detected}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

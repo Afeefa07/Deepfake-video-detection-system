@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto mt-10">
+    <div class="flex justify-between items-end mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-white mb-2">Platform Admin Dashboard</h1>
+            <p class="text-gray-400">Global overview and user management.</p>
+        </div>
+        <div class="flex items-center">
+            <a href="{% url 'dashboard' %}"
+                class="bg-gray-800 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg shadow-neo transition-all pointer focus:outline-none">
+                Back to My Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div
+            class="neo-box p-6 bg-neo-surface flex flex-col items-center justify-center border-t-4 border-neo-secondary">
+            <h3 class="text-gray-400 font-semibold mb-2 tracking-wider uppercase text-sm">Total Users</h3>
+            <p class="text-5xl font-bold text-white">{{ total_users }}</p>
+        </div>
+        <div class="neo-box p-6 bg-neo-surface flex flex-col items-center justify-center border-t-4 border-blue-500">
+            <h3 class="text-gray-400 font-semibold mb-2 tracking-wider uppercase text-sm">Videos Analyzed</h3>
+            <p class="text-5xl font-bold text-white">{{ total_videos }}</p>
+        </div>
+        <div class="neo-box p-6 bg-neo-surface flex flex-col items-center justify-center border-t-4 border-red-500">
+            <h3 class="text-gray-400 font-semibold mb-2 tracking-wider uppercase text-sm">Fakes Detected</h3>
+            <p class="text-5xl font-bold text-white">{{ total_fakes }}</p>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+        <svg class="w-6 h-6 mr-2 text-neo-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+            </path>
+        </svg>
+        Registered Users
+    </h2>
+    <div class="neo-box p-6 bg-neo-surface mb-10">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="py-4 px-6 font-semibold">Username</th>
+                        <th class="py-4 px-6 font-semibold">Date Joined</th>
+                        <th class="py-4 px-6 font-semibold">Role</th>
+                        <th class="py-4 px-6 font-semibold text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr class="border-b border-gray-800 hover:bg-neo-highlight transition-colors">
+                        <td class="py-4 px-6 font-medium text-white">{{ u.username }}</td>
+                        <td class="py-4 px-6 text-gray-400 text-sm">{{ u.date_joined|date:"M d, Y h:i A" }}</td>
+                        <td class="py-4 px-6">
+                            {% if u.is_superuser %}
+                            <span
+                                class="px-3 py-1 rounded-full bg-blue-900/40 text-blue-400 border border-blue-700 text-xs font-bold tracking-wider uppercase">Admin</span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 rounded-full bg-gray-800 text-gray-400 border border-gray-700 text-xs font-bold tracking-wider uppercase">User</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-right">
+                            {% if u != request.user %}
+                            <form action="{% url 'delete_user' u.id %}" method="POST" class="inline m-0 p-0">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="text-xs bg-red-900/40 text-red-300 border border-red-700/50 hover:bg-red-800/60 px-4 py-2 rounded-lg transition-colors flex items-center ml-auto"
+                                    onclick="return confirm('WARNING: This will permanently delete user {{ u.username }} and ALL of their analysis history. Proceed?')">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
+                                    Remove
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">No users found in database.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Recent Global Detections -->
+    <h2 class="text-2xl font-bold text-white mb-4 flex items-center">
+        <svg class="w-6 h-6 mr-2 text-neo-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+            </path>
+        </svg>
+        Recent Platform Activity
+    </h2>
+    <div class="neo-box p-6 bg-neo-surface">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-gray-400 border-b border-gray-700">
+                        <th class="py-4 px-6 font-semibold">User</th>
+                        <th class="py-4 px-6 font-semibold">Video Name</th>
+                        <th class="py-4 px-6 font-semibold">Prediction</th>
+                        <th class="py-4 px-6 font-semibold">Date Analyzed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_detections %}
+                    <tr class="border-b border-gray-800 hover:bg-neo-highlight transition-colors">
+                        <td class="py-4 px-6 font-medium text-gray-300">{{ item.user.username|default:"Anonymous" }}
+                        </td>
+                        <td class="py-4 px-6 font-medium text-white">{{ item.filename }}</td>
+                        <td class="py-4 px-6">
+                            {% if item.label == 'REAL' %}
+                            <span
+                                class="px-3 py-1 rounded-full bg-green-900/40 text-green-400 border border-green-700 text-xs font-bold tracking-wider uppercase">REAL</span>
+                            {% else %}
+                            <span
+                                class="px-3 py-1 rounded-full bg-red-900/40 text-red-400 border border-red-700 text-xs font-bold tracking-wider uppercase">FAKE</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-6 text-gray-400 text-sm">{{ item.created_at|date:"M d, Y h:i A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="py-8 text-center text-gray-500">No analysis history found across the
+                            entire platform.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

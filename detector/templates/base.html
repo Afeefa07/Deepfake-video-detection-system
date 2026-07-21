@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deepfake Detection System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        neo: {
+                            dark: '#1e1e24',
+                            surface: '#2b2b36',
+                            highlight: '#3a3a48',
+                            primary: '#00f2fe',
+                            secondary: '#4facfe',
+                            accent: '#ff0844',
+                            glass: 'rgba(43, 43, 54, 0.7)',
+                            shadow: '#15151c',
+                            light: '#353540'
+                        }
+                    },
+                    boxShadow: {
+                        'neo': '8px 8px 16px #15151c, -8px -8px 16px #272730',
+                        'neo-inner': 'inset 6px 6px 12px #15151c, inset -6px -6px 12px #272730',
+                        'neo-pop': '0 0 15px rgba(0, 242, 254, 0.5), 0 0 30px rgba(79, 172, 254, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #1e1e24;
+            color: #e2e8f0;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(79, 172, 254, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(255, 8, 68, 0.05), transparent 25%);
+            min-height: 100vh;
+        }
+
+        .neo-box {
+            background: #2b2b36;
+            border-radius: 1rem;
+            box-shadow: 8px 8px 16px #18181d, -8px -8px 16px #3e3e4f;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+        }
+
+        .neo-button {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+            transition: all 0.3s ease;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .neo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.5);
+        }
+
+        .neo-input {
+            background: #1e1e24;
+            border-radius: 0.5rem;
+            box-shadow: inset 4px 4px 8px #15151c, inset -4px -4px 8px #272730;
+            border: none;
+            color: #e2e8f0;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            outline: none;
+            transition: box-shadow 0.3s;
+        }
+
+        .neo-input:focus {
+            box-shadow: inset 4px 4px 8px #15151c, inset -4px -4px 8px #272730, 0 0 0 2px rgba(0, 242, 254, 0.5);
+        }
+
+        .glass-panel {
+            background: rgba(43, 43, 54, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: #2b2b36;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            box-shadow: 4px 4px 8px #18181d, -4px -4px 8px #3e3e4f;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #4facfe, #00f2fe);
+        }
+
+        .metric-card.warning::before {
+            background: linear-gradient(to bottom, #ff0844, #ffb199);
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-neo-primary selection:text-neo-dark min-h-screen flex flex-col">
+
+    <!-- Navigation -->
+    <nav class="glass-panel mx-4 mt-4 px-6 py-4 flex justify-between items-center z-50 sticky top-4">
+        <div class="flex items-center space-x-2">
+            <div
+                class="w-8 h-8 rounded-full bg-gradient-to-tr from-neo-secondary to-neo-primary flex items-center justify-center text-neo-dark font-bold text-xl shadow-neo-pop">
+                N
+            </div>
+            <a href="{% url 'home' %}"
+                class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neo-secondary to-neo-primary tracking-tight">
+                NeST<span class="text-white font-medium">Detector</span>
+            </a>
+        </div>
+
+        <div class="flex items-center space-x-6">
+            <a href="{% url 'home' %}" class="text-gray-300 hover:text-white transition-colors">Analyzer</a>
+
+            {% if user.is_authenticated %}
+            <a href="{% url 'dashboard' %}" class="text-gray-300 hover:text-white transition-colors">History</a>
+            {% if user.is_superuser %}
+            <a href="{% url 'custom_admin' %}" class="text-gray-300 hover:text-white transition-colors">Admin Panel</a>
+            {% endif %}
+            <div class="h-6 w-px bg-gray-700"></div>
+            <div class="flex items-center space-x-4">
+                <span class="text-sm text-gray-400">@{{ user.username }}</span>
+                <a href="{% url 'logout' %}"
+                    class="px-4 py-2 rounded-lg bg-neo-surface border border-gray-700 hover:bg-neo-highlight transition-all text-sm font-medium">Logout</a>
+            </div>
+            {% else %}
+            <a href="{% url 'login' %}" class="text-gray-300 hover:text-white transition-colors">Login</a>
+            <a href="{% url 'signup' %}" class="neo-button px-5 py-2 text-sm">Sign Up</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow container mx-auto px-4 py-8 relative z-10 w-full max-w-7xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-6 text-center text-sm text-gray-500 border-t border-gray-800 mt-auto">
+        <p>Final Year BTech Computer Science Project &copy; {% now "Y" %}</p>
+        <p class="mt-1">Powered by NeST Transformer & Multi-ROI Sync rPPG</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

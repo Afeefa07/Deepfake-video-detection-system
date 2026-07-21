@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto mt-8">
+
+    <div class="text-center mb-10">
+        <h1
+            class="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-neo-primary to-neo-secondary drop-shadow-lg">
+            Video Deepfake Analyzer
+        </h1>
+        <p class="text-gray-400 text-lg">
+            Upload a video to analyze physiological signals and extract multi-stream features.
+        </p>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="upload-section" class="neo-box p-8 text-center transition-all duration-500 ease-in-out">
+        <div class="border-2 border-dashed border-gray-600 rounded-xl p-12 hover:border-neo-primary transition-colors cursor-pointer"
+            id="dropzone" onclick="document.getElementById('videoFile').click()">
+            <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+            <p class="text-xl font-medium text-gray-300">Drag and drop a video here</p>
+            <p class="mt-2 text-sm text-gray-500">or click to select file</p>
+            <input type="file" id="videoFile" class="hidden" accept="video/mp4,video/x-m4v,video/*">
+        </div>
+
+        <div id="file-info"
+            class="hidden mt-6 flex justify-between items-center bg-neo-dark p-4 rounded-lg border border-gray-700">
+            <div class="flex items-center text-gray-300">
+                <svg class="w-6 h-6 mr-3 text-neo-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z">
+                    </path>
+                </svg>
+                <span id="filename-display" class="font-medium">filename.mp4</span>
+            </div>
+            <button id="analyze-btn" class="neo-button px-6 py-2 shadow-neo-pop">Analyze Media</button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-section" class="hidden mt-12 text-center">
+        <div class="inline-block relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 rounded-full border-t-4 border-neo-primary animate-spin"></div>
+            <div class="absolute inset-2 rounded-full border-r-4 border-neo-secondary animate-spin"
+                style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+            <div class="absolute inset-0 flex flex-col justify-center items-center">
+                <span class="text-xs font-bold text-neo-primary">NeST</span>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2" id="loading-text">Extracting Features...</h3>
+        <p class="text-gray-400">Running FaceMesh, rPPG isolation, and Temporal Backbone analysis.</p>
+
+        <div class="w-full max-w-md mx-auto mt-6 bg-gray-800 rounded-full h-2">
+            <div class="bg-gradient-to-r from-neo-primary to-neo-secondary h-2 rounded-full overflow-hidden relative">
+                <div class="absolute top-0 bottom-0 left-0 right-0 animate-pulse bg-white opacity-20"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="hidden mt-8 animate-fade-in">
+
+        <!-- Top High-Level Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div class="metric-card flex flex-col justify-center items-center py-8" id="verdict-card">
+                <h3 class="text-sm uppercase tracking-widest text-gray-500 mb-2 font-semibold">Final Verdict</h3>
+                <div id="result-label" class="text-5xl font-black tracking-tight mt-2 drop-shadow-md">
+                    FAKE
+                </div>
+            </div>
+
+            <div class="metric-card p-6">
+                <h3 class="text-sm uppercase tracking-widest text-gray-400 mb-4 font-semibold">Confidence Score</h3>
+                <div class="flex items-end justify-between mb-2">
+                    <span class="text-4xl font-bold text-white" id="confidence-score">98.5%</span>
+                    <span class="text-gray-500 text-sm mb-1" id="fake-prob-text">Fake Probability: 0.985</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-4 mt-2 border border-gray-700">
+                    <div id="confidence-bar" class="h-full rounded-full bg-gradient-to-r from-red-500 to-red-400"
+                        style="width: 98.5%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Visual Analysis -->
+            <div class="lg:col-span-1 space-y-6">
+                <div class="metric-card p-0 overflow-hidden group">
+                    <div class="bg-gray-800 p-3 border-b border-gray-700 text-sm font-semibold flex justify-between">
+                        <span>Subject Modality</span>
+                        <span class="text-neo-primary text-xs flex items-center"><svg class="w-3 h-3 mr-1"
+                                fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd"></path>
+                            </svg> Face BBox + ROI</span>
+                    </div>
+                    <div class="relative w-full h-48 bg-black flex items-center justify-center">
+                        <img id="visualization-image" src="" alt="Face Visualization"
+                            class="max-h-full object-contain filter group-hover:brightness-110 transition-all">
+                        <div id="no-vis" class="hidden text-gray-600 text-sm">No visualization generated</div>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <h4 class="text-gray-400 text-sm font-medium mb-3">Branch Probabilities</h4>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Visual Stream Score</span>
+                                <span class="font-mono text-neo-secondary" id="visual-score">0.00</span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-1.5">
+                                <div id="visual-bar" class="bg-neo-secondary h-1.5 rounded-full" style="width: 0%">
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span>Physiological (rPPG) Score</span>
+                                <span class="font-mono text-neo-primary" id="rppg-score">0.00</span>
+                            </div>
+                            <div class="w-full bg-gray-800 rounded-full h-1.5">
+                                <div id="rppg-bar" class="bg-neo-primary h-1.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-700 pt-3 mt-3">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-400">Fusion Gate (Visual vs rPPG)</span>
+                                <span class="font-mono text-gray-300" id="fusion-gate">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- rPPG Metrics -->
+            <div class="lg:col-span-2 metric-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-white flex items-center border-l-4 border-neo-primary pl-3">
+                        Extracted Physiological Features (rPPG)
+                    </h3>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">Heart Rate (BPM)</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-bpm">--</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">ROI Sync</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-sync">--</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">Peak Ratio</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-peak">--</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">SNR Forehead</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-snr">--</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">Spectral Entropy</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-entropy">--</div>
+                    </div>
+                    <div class="bg-gray-800/50 p-4 rounded-lg border border-gray-700/50">
+                        <div class="text-gray-400 text-xs uppercase mb-1">Frames Validated</div>
+                        <div class="text-2xl font-mono text-white" id="rppg-frames">--</div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center pt-6 border-t border-gray-800">
+                    <button onclick="resetUI()"
+                        class="text-gray-400 hover:text-white underline text-sm transition-colors">Analyze Another
+                        Video</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const fileInput = document.getElementById('videoFile');
+    const dropzone = document.getElementById('dropzone');
+    const fileInfo = document.getElementById('file-info');
+    const filenameDisplay = document.getElementById('filename-display');
+    const analyzeBtn = document.getElementById('analyze-btn');
+
+    // UI Sections
+    const uploadSection = document.getElementById('upload-section');
+    const loadingSection = document.getElementById('loading-section');
+    const resultsSection = document.getElementById('results-section');
+
+    // Event Listeners for file drop
+    dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-neo-primary', 'bg-neo-dark');
+    });
+
+    dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('border-neo-primary', 'bg-neo-dark');
+    });
+
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-neo-primary', 'bg-neo-dark');
+        if (e.dataTransfer.files.length) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileInfo();
+        }
+    });
+
+    fileInput.addEventListener('change', updateFileInfo);
+
+    function updateFileInfo() {
+        if (fileInput.files.length > 0) {
+            filenameDisplay.textContent = fileInput.files[0].name;
+            dropzone.classList.add('hidden');
+            fileInfo.classList.remove('hidden');
+        }
+    }
+
+    function resetUI() {
+        fileInput.value = '';
+        resultsSection.classList.add('hidden');
+        fileInfo.classList.add('hidden');
+        dropzone.classList.remove('hidden');
+        uploadSection.classList.remove('hidden');
+    }
+
+    analyzeBtn.addEventListener('click', async () => {
+        if (!fileInput.files.length) return;
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('video', file);
+
+        uploadSection.classList.add('hidden');
+        loadingSection.classList.remove('hidden');
+
+        // Progress text animation
+        const loadingTexts = ["Extracting Frames...", "Running MediaPipe FaceMesh...", "Isolating Physiological ROIs...", "Estimating heart-rate via POS...", "Passing to NeST Backbone...", "Fusing visual & rPPG probabilities..."];
+        let textIdx = 0;
+        const textInterval = setInterval(() => {
+            document.getElementById('loading-text').innerText = loadingTexts[textIdx];
+            textIdx = (textIdx + 1) % loadingTexts.length;
+        }, 1500);
+
+        try {
+            const response = await fetch('{% url "detect_video" %}', {
+                method: 'POST',
+                body: formData
+            });
+
+            clearInterval(textInterval);
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Server error');
+            }
+
+            const result = await response.json();
+            displayResults(result);
+
+        } catch (error) {
+            clearInterval(textInterval);
+            alert("Error: " + error.message);
+            resetUI();
+        }
+    });
+
+    function displayResults(data) {
+        loadingSection.classList.add('hidden');
+        resultsSection.classList.remove('hidden');
+
+        // Verdict Card
+        const verdictCard = document.getElementById('verdict-card');
+        const resultLabel = document.getElementById('result-label');
+        if (data.label === "FAKE") {
+            verdictCard.classList.add('warning');
+            resultLabel.textContent = "FAKE";
+            resultLabel.className = "text-5xl font-black tracking-tight mt-2 text-red-500 drop-shadow-md";
+        } else {
+            verdictCard.classList.remove('warning');
+            resultLabel.textContent = "REAL";
+            resultLabel.className = "text-5xl font-black tracking-tight mt-2 text-green-400 drop-shadow-md";
+        }
+
+        // Confidence
+        document.getElementById('confidence-score').textContent = (data.confidence * 100).toFixed(1) + '%';
+        document.getElementById('fake-prob-text').textContent = 'Fake Probability: ' + data.fake_probability.toFixed(3);
+        const barColor = data.label === "FAKE" ? 'bg-gradient-to-r from-red-600 to-red-400' : 'bg-gradient-to-r from-green-600 to-green-400';
+        document.getElementById('confidence-bar').className = `h-full rounded-full ${barColor}`;
+        document.getElementById('confidence-bar').style.width = (data.confidence * 100) + '%';
+
+        // Visuals
+        const img = document.getElementById('visualization-image');
+        const noVis = document.getElementById('no-vis');
+        if (data.visualization_path) {
+            img.src = data.visualization_path + "?t=" + new Date().getTime(); // bust cache
+            img.classList.remove('hidden');
+            noVis.classList.add('hidden');
+        } else {
+            img.classList.add('hidden');
+            noVis.classList.remove('hidden');
+        }
+
+        // Branch Probabilities
+        const vScore = data.visual_stream_score || 0;
+        const rScore = data.rppg_stream_score || 0;
+        document.getElementById('visual-score').textContent = vScore.toFixed(3);
+        document.getElementById('visual-bar').style.width = (vScore * 100) + '%';
+        document.getElementById('visual-bar').className = `h-1.5 rounded-full ${vScore > 0.5 ? 'bg-red-400' : 'bg-green-400'}`;
+
+        document.getElementById('rppg-score').textContent = rScore.toFixed(3);
+        document.getElementById('rppg-bar').style.width = (rScore * 100) + '%';
+        document.getElementById('rppg-bar').className = `h-1.5 rounded-full ${rScore > 0.5 ? 'bg-red-400' : 'bg-green-400'}`;
+
+        document.getElementById('fusion-gate').textContent = (data.average_fusion_gate || 0).toFixed(3);
+
+        // rPPG features
+        if (data.rppg_features) {
+            document.getElementById('rppg-bpm').textContent = (data.rppg_features.bpm_mean || 0).toFixed(1);
+            document.getElementById('rppg-sync').textContent = (data.rppg_features.roi_sync_mean || 0).toFixed(3);
+            document.getElementById('rppg-peak').textContent = (data.rppg_features.peak_ratio_mean || 0).toFixed(2);
+            document.getElementById('rppg-snr').textContent = (data.rppg_features.snr_forehead_mean || 0).toFixed(2);
+            document.getElementById('rppg-entropy').textContent = (data.rppg_features.spectral_entropy_mean || 0).toFixed(2);
+        }
+        document.getElementById('rppg-frames').textContent = data.faces_detected || 0;
+
+        // Scroll slightly
+        window.scrollTo({ top: uploadSection.offsetTop - 50, behavior: 'smooth' });
+    }
+</script>
+{% endblock %}

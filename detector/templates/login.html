@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-20">
+    <div class="neo-box p-8">
+        <h2
+            class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neo-primary to-neo-secondary mb-6 text-center tracking-tight">
+            Welcome Back
+        </h2>
+
+        <form method="POST" action="{% url 'login' %}" class="space-y-6">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="bg-red-900/50 border border-red-800 text-red-200 px-4 py-3 rounded-lg text-sm">
+                Invalid username or password. Please try again.
+            </div>
+            {% endif %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Username</label>
+                <input type="text" name="username" class="neo-input" required>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Password</label>
+                <input type="password" name="password" class="neo-input" required>
+            </div>
+
+            <button type="submit" class="w-full neo-button py-3 text-lg mt-4 shadow-neo-pop">
+                Access Panel
+            </button>
+        </form>
+
+        <p class="text-center text-gray-500 text-sm mt-6">
+            Don't have an account? <a href="{% url 'signup' %}"
+                class="text-neo-secondary hover:text-neo-primary underline">Sign up here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

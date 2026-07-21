@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-md mx-auto mt-16">
+    <div class="neo-box p-8">
+        <h2
+            class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-neo-primary to-neo-secondary mb-6 text-center tracking-tight">
+            Create Account
+        </h2>
+
+        <form method="POST" action="{% url 'signup' %}" class="space-y-4">
+            {% csrf_token %}
+
+            {% for field in form %}
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-1">{{ field.label }}</label>
+                {{ field }}
+                {% if field.errors %}
+                <p class="text-red-400 text-xs mt-1">{{ field.errors.0 }}</p>
+                {% endif %}
+                {% if field.help_text %}
+                <p class="text-gray-500 text-xs mt-1">{{ field.help_text }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <style>
+                input[type="text"],
+                input[type="password"],
+                input[type="email"] {
+                    background: #1e1e24;
+                    border-radius: 0.5rem;
+                    box-shadow: inset 4px 4px 8px #15151c, inset -4px -4px 8px #272730;
+                    border: none;
+                    color: #e2e8f0;
+                    padding: 0.75rem 1rem;
+                    width: 100%;
+                    outline: none;
+                }
+
+                input[type="text"]:focus,
+                input[type="password"]:focus,
+                input[type="email"]:focus {
+                    box-shadow: inset 4px 4px 8px #15151c, inset -4px -4px 8px #272730, 0 0 0 2px rgba(0, 242, 254, 0.5);
+                }
+
+                .helptext {
+                    display: none;
+                }
+            </style>
+
+            <button type="submit" class="w-full neo-button py-3 text-lg mt-6 shadow-neo-pop">
+                Sign Up
+            </button>
+        </form>
+
+        <p class="text-center text-gray-500 text-sm mt-6">
+            Already have an account? <a href="{% url 'login' %}"
+                class="text-neo-secondary hover:text-neo-primary underline">Log in</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
