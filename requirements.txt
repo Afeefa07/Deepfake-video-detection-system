@@ -1,0 +1,8 @@
+django
+opencv-python
+numpy
+torch
+torchvision
+timm
+mediapipe
+scipy
